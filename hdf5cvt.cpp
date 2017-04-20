@@ -10,15 +10,6 @@ HDF5convertor::HDF5convertor(QObject *parent, QString datasetpath, QString outpu
 {
     _currentTime = QDateTime::currentDateTime();
 
-    if(_isLog)
-    {
-        QString logFilename = _dataset_name.mid(0, _dataset_name.lastIndexOf("."));
-        logFilename = logFilename.mid(logFilename.lastIndexOf("/") + 1);
-        logFilename = _storeDir + logFilename + "_logStiParam.txt";
-
-        _logFilePtr = new QFile(logFilename);
-    }
-
 }
 
 bool HDF5convertor::readH5File()
@@ -278,8 +269,15 @@ bool HDF5convertor::convertFile()
         QString _outputFileName = _dataset_name.mid(0, _dataset_name.lastIndexOf("."));
         _outputFileName = _outputFileName.mid(_outputFileName.lastIndexOf("/") + 1);
 
-        _outputFilePath = _storeDir +  "/" + _outputFileName + " processedTime " 
+        _outputFilePath = _storeDir +  "/" + _outputFileName + "_processedTime_" 
             + _currentTime.toString("yyyy.MM.dd_hh-mm") + "." + _filetype;
+
+        if (_isLog)
+        {
+            QString logFilename = _outputFilePath.mid(0, _outputFilePath.lastIndexOf("."));
+            logFilename = logFilename + "_logFile.txt";
+            _logFilePtr = new QFile(logFilename);
+        }
 
         //_codec = CV_FOURCC('X', '2', '6', '4');
         //_codec = CV_FOURCC('D', 'I', 'V', 'X');
@@ -327,7 +325,7 @@ bool HDF5convertor::convertFile()
             cv::putText(_outputFrame, _stiParamsText.toStdString(), textOrg, fontFace, fontScale, cv::Scalar::all(255), thickness, CV_AA);
             
             //when the periodCount is larger than 0, it means the frame is stimulated
-            if (tmp.periodCount > 0)
+            if (tmp.periodCount > 0 || tmp.frequency > 0 || tmp.dutyCycle > 0)
             {
                 cv::circle(_outputFrame, circleOrg, textSize.height / 2, cv::Scalar(0, 0, 255), -1);
 
@@ -335,12 +333,16 @@ bool HDF5convertor::convertFile()
                 {
                     if (_logFilePtr->open(QFile::Append | QFile::Text))
                     {
-                           QTextStream out(_logFilePtr);
-                           //out.setFieldWidth(2);
-                           //out.setFieldAlignment(QTextStream::AlignLeft);
-                           //out.setPadChar(' ');
-                           out << " Video Time(sec): "<< frameIdx / _fps << _stiParamsText << "\r\n";
-                           _logFilePtr->close();
+                        int sec = frameIdx / _fps;
+                        int mius = sec / 60;
+                        sec = sec % 60;
+
+                        QTextStream out(_logFilePtr);
+                        out.setFieldWidth(2);
+                        out.setFieldAlignment(QTextStream::AlignLeft);
+                        out.setPadChar(' ');
+                        out << " Video Time(sec): " << mius << ":" << sec << " " << _stiParamsText << "\r\n";
+                        _logFilePtr->close();
                     }
                 }
             }
@@ -379,7 +381,7 @@ bool HDF5convertor::convertFile()
             cv::putText(_outputFrame, _stiParamsText.toStdString(), textOrg, fontFace, fontScale, cv::Scalar::all(255), thickness, CV_AA);
 
             //when the periodCount is larger than 0, it means the frame is stimulated
-            if (tmp.periodCount > 0)
+            if (tmp.periodCount > 0 || tmp.frequency > 0 || tmp.dutyCycle > 0)
             {
                 cv::circle(_outputFrame, circleOrg, textSize.height / 2, cv::Scalar(0, 0, 255), -1);
             }

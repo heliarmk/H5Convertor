@@ -11,6 +11,7 @@ cvtH5Dialog::cvtH5Dialog(QWidget *parent) :
     _type = "image";
     _isLog = false;
     ui->progressBar->setValue(0);
+    setWindowIcon(QIcon("logo.ico"));
 }
 
 cvtH5Dialog::~cvtH5Dialog()

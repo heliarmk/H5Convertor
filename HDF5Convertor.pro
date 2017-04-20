@@ -21,6 +21,8 @@ HEADERS  += cvth5dialog.h \
 
 FORMS    += cvth5dialog.ui
 
+RC_FILE += images/logo.rc
+
 #Opencv lib path
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../dev/opencv/opencv3.2/build/x64/vc14/lib/ -lopencv_world320
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../dev/opencv/opencv3.2/build/x64/vc14/lib/ -lopencv_world320d
@@ -35,3 +37,6 @@ win32: LIBS += -L$$PWD/../../../../dev/hdf5/1.10.0-patch1/lib/ -lhdf5 \
                                                                -lzlib
 INCLUDEPATH += $$PWD/../../../../dev/hdf5/1.10.0-patch1/include
 DEPENDPATH += $$PWD/../../../../dev/hdf5/1.10.0-patch1/include
+
+RESOURCES += \
+    icon.qrc
