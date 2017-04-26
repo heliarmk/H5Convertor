@@ -13,6 +13,8 @@
 #include <QDebug>
 #include <QDateTime>
 #include <QObject>
+#include <QList>
+#include <QPair>
 
 using namespace H5;
 

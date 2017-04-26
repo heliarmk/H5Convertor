@@ -274,9 +274,11 @@ bool HDF5convertor::convertFile()
 
         if (_isLog)
         {
+            //init log file
             QString logFilename = _outputFilePath.mid(0, _outputFilePath.lastIndexOf("."));
             logFilename = logFilename + "_logFile.txt";
             _logFilePtr = new QFile(logFilename);
+
         }
 
         //_codec = CV_FOURCC('X', '2', '6', '4');
@@ -285,7 +287,7 @@ bool HDF5convertor::convertFile()
         //_codec = CV_FOURCC('M', 'J', 'P', 'G');
         //_codec = CV_FOURCC('P', 'I', 'M', '1');
 
-        _fps = 20.0;
+        _fps = 60.0;
 
         _writerPtr = new cv::VideoWriter(_outputFilePath.toStdString(), _codec, _fps, _outputSize);
 
@@ -294,6 +296,12 @@ bool HDF5convertor::convertFile()
             qDebug() << "VideoWriter is not ready";
             return false;
         }
+
+        //is sitmulated status
+        quint32 allStiCount = 0;
+        //log params list
+        QList<QPair<ParaConfig,quint32> > paramList;
+        //
 
         for (hsize_t frameIdx = 0; frameIdx < _dims[0]; frameIdx++)
         {
@@ -328,22 +336,42 @@ bool HDF5convertor::convertFile()
             if (tmp.periodCount > 0 || tmp.frequency > 0 || tmp.dutyCycle > 0)
             {
                 cv::circle(_outputFrame, circleOrg, textSize.height / 2, cv::Scalar(0, 0, 255), -1);
-
+                
                 if( _isLog)
                 {
-                    if (_logFilePtr->open(QFile::Append | QFile::Text))
+                    paramList.push_back(qMakePair(tmp, frameIdx));
+                }
+            }
+            else
+            {
+                if (_isLog)
+                {
+                    if (paramList.size() > 0)
                     {
-                        int sec = frameIdx / _fps;
-                        int mius = sec / 60;
-                        sec = sec % 60;
+                        allStiCount ++;
+                        quint32 firstFrameIdx = paramList.first().second;
+                        quint32 lastFrameIdx = paramList.last().second;
+                        quint32 frameCount = lastFrameIdx - firstFrameIdx;
+                        ParaConfig tmp = paramList.first().first;
+                        QString _stiParamsToTxt = _stiParamsModel.arg(tmp.dutyCycle).arg(tmp.frequency).arg(tmp.periodCount).arg(tmp.stimulusCount).arg(tmp.direction);
+                    
+                        if (_logFilePtr->open(QFile::Append | QFile::Text))
+                        {
+                            int sec = firstFrameIdx / _fps;
+                            int mius = sec / 60;
+                            sec = sec % 60;
 
-                        QTextStream out(_logFilePtr);
-                        out.setFieldWidth(2);
-                        out.setFieldAlignment(QTextStream::AlignLeft);
-                        out.setPadChar(' ');
-                        out << " Video Time(sec): " << mius << ":" << sec << " " << _stiParamsText << "\r\n";
-                        _logFilePtr->close();
+                            QTextStream out(_logFilePtr);
+                            out.setFieldWidth(2);
+                            out.setFieldAlignment(QTextStream::AlignLeft);
+                            out.setPadChar(' ');
+                            out << "The" << allStiCount << "th Stimulus" << " Video Time(sec): " << mius << ":" << sec << " " <<" FrameCount:" << frameCount << _stiParamsToTxt << "\r\n";
+                            _logFilePtr->close();
+                        }
+
+                        paramList.clear();
                     }
+
                 }
             }
             //write the frame
